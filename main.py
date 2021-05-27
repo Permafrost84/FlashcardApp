@@ -3,6 +3,8 @@ import pandas
 import random
 
 BACKGROUND_COLOR = "#B1DDC6"
+current_card = {}
+to_learn = {}
 
 
 def next_card():
@@ -17,6 +19,15 @@ def next_card():
     flip_timer = window.after(3000, func=flip_card)
 
 
+def is_known():
+    """Remove the current card from the to_learn-dictionary and put it in the cards_learned dictionary. """
+    global current_card
+    to_learn.remove(current_card)
+    data = pandas.DataFrame(to_learn)
+    data.to_csv("data/words_to_learn.csv", index=False)
+    next_card()
+
+
 def flip_card():
     global current_card
     canvas.itemconfig(card_title, text="English", fill="white")
@@ -26,10 +37,14 @@ def flip_card():
 
 
 # ---------------------------------- Load data -------------------------- #
+try:
+    data = pandas.read_csv("data/words_to_learn.csv")
+except FileNotFoundError:
+    original_data = pandas.read_csv("data/french_words.csv")
+    to_learn = original_data.to_dict(orient="records")
+else:
+    to_learn = data.to_dict(orient="records")
 
-data = pandas.read_csv("data/french_words.csv")
-to_learn = data.to_dict(orient="records")
-current_card = {}
 
 # ---------------------------------- Generate UI -------------------------- #
 window = Tk()
@@ -59,7 +74,7 @@ known_button = Button(image=check_image, highlightthickness=0, command=next_card
 known_button.grid(row=1, column=1)
 
 cross_image = PhotoImage(file="images/wrong.png")
-unknown_button = Button(image=cross_image, highlightthickness=0, command=next_card)
+unknown_button = Button(image=cross_image, highlightthickness=0, command=is_known)
 unknown_button.grid(row=1, column=0)
 
 next_card()
